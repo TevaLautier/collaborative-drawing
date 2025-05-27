@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Drawing Board</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="user-id-display"></div>
+        <canvas id="drawing-board"></canvas>
+        <div class="toolbar">
+            
+            <div class="brusch" style="--size:1" data-size="1"></div>
+            <div class="brusch" style="--size:3" data-size="3"></div>
+            <div class="brusch" style="--size:5" data-size="5"></div>
+            <div class="brusch" style="--size:10" data-size="10"></div>
+            <input type="number" id="brush-size" min="1" value="5" size="3">
+          
+            <input type="color" id="color-picker" value="#000000">
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="scripts.js"></script>
+    <img src="images/drawing.png" id="thumbnail"/>
+    <img src="animation/1.gif" id="floating-image"/>
+    
+</body>
+</html>

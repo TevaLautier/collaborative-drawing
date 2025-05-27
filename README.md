@@ -4,18 +4,14 @@ Welcome to the Online Drawing Board, a web-based application for creating and sh
 
 ## Features
 
-- Real-time drawing with multiple users
-- Brush size and color customization
-- Eraser tool
-- Save drawings as images
-- User authentication and drawing history
+TODO
 
 ## Getting Started
 
 To run this project locally, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/lonrun/online-drawing-board.git`
-2. Navigate to the project directory: `cd online-drawing-board`
+1. Clone the repository: `git clone https://github.com/TevaLautier/collaborative-drawing.git`
+2. Navigate to the project directory: `cd collaborative-drawing`
 3. Install dependencies: `npm install`
 4. Start the development server: `npm start`
 5. Open your browser and visit `http://localhost:3000`

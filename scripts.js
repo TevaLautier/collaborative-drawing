@@ -99,6 +99,7 @@ let previousPosition;
 
 let lastCenter,
   pinchLastDist,
+  startTranslate,
   pinchStartCenter,
   zoomOrigin = makePos(0, 0),
   zoomFactor = 1;
@@ -123,7 +124,7 @@ const startMouvement = (e) => {
     x: e.pageX - canvas.offsetLeft,
     y: e.pageY - canvas.offsetTop,
   });
-
+  startTranslate = zoomOrigin;
   context.beginPath();
   context.moveTo(previousPosition.x, previousPosition.y);
 
@@ -143,11 +144,13 @@ const moveMouvement = (e) => {
     size = brushSizeInput.value;
     gco = "source-over";
   } else if (selectedTools === "move") {
-    console.log(previousPosition)
-    console.log(e.pageX,e.pageY)
-    zoom(zoomFactor, {
-      x: e.pageX - previousPosition.x,
-      y: e.pageY - previousPosition.y,
+    const cpage = ecran2canvas({ x: e.pageX, y: e.pageY });
+    console.log(cpage);
+    console.log(previousPosition);
+    console.log(startTranslate);
+    setZoom(zoomFactor, {
+      x: (cpage.x - previousPosition.x) * zoomFactor + startTranslate.x,
+      y: (cpage.y - previousPosition.y) * zoomFactor + startTranslate.y,
     });
     return;
   }
@@ -176,7 +179,7 @@ const moveMouvement = (e) => {
 };
 const stopMouvmeent = (e) => {
   drawing = false;
-  lastCenter = null;
+  startTranslate = zoomOrigin;
   pinchLastDist = pinchStartCenter = 0;
   socket.emit("log", { zoomFactor });
 };
@@ -188,22 +191,8 @@ const stopMouvmeent = (e) => {
 //   zoom(1.3, makePos(100 + zoomOrigin.x * 1.3, 100 + zoomOrigin.x * 1.3));
 // }, 4000);
 
-
-const zoom = (newscale, center) => {
-  const px = center.x;
-  const py = center.y;
-  const tx = zoomOrigin.x;
-  const ty = zoomOrigin.y;
-
-  // local coordinates of center point
-  const pointTo = {
-    x: (px - tx) / zoomFactor,
-    y: (py - ty) / zoomFactor,
-  };
-  zoomOrigin = {
-    x: px - pointTo.x * newscale,
-    y: py - pointTo.y * newscale,
-  };
+const setZoom = (newscale, orig) => {
+  zoomOrigin = orig;
   zoomFactor = newscale;
   const t =
     "scale(" +
@@ -216,6 +205,22 @@ const zoom = (newscale, center) => {
   console.log("log", t);
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = t;
+};
+const zoom = (newscale, center) => {
+  const px = center.x;
+  const py = center.y;
+  const tx = zoomOrigin.x;
+  const ty = zoomOrigin.y;
+
+  // local coordinates of center point
+  const pointTo = {
+    x: (px - tx) / zoomFactor,
+    y: (py - ty) / zoomFactor,
+  };
+  setZoom(newscale, {
+    x: px - pointTo.x * newscale,
+    y: py - pointTo.y * newscale,
+  });
 };
 const stageMouseWheel = (e) => {
   e.preventDefault();

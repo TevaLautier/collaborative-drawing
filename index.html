@@ -11,14 +11,18 @@
         <div id="user-id-display"></div>
         <canvas id="drawing-board"></canvas>
         <div class="toolbar">
-            
-            <div class="brusch" style="--size:1" data-size="1"></div>
-            <div class="brusch" style="--size:3" data-size="3"></div>
-            <div class="brusch" style="--size:5" data-size="5"></div>
-            <div class="brusch" style="--size:10" data-size="10"></div>
+            <div class="brusch selected" style="--size:1" data-size="1" data-tool="pencil"></div>
+            <div class="brusch" style="--size:3" data-size="3" data-tool="pencil"></div>
+            <div class="brusch" style="--size:5" data-size="5" data-tool="pencil"></div>
+            <div class="brusch" style="--size:10" data-size="10" data-tool="pencil"></div>
+            <div class="gomme" style="--size:1" data-size="1" data-tool="eraser"></div>
+            <div class="gomme" style="--size:5" data-size="5" data-tool="eraser"></div>
+            <div class="gomme" style="--size:10" data-size="10" data-tool="eraser"></div>
+            <div class="gomme" style="--size:20" data-size="20" data-tool="eraser"></div>
             <input type="number" id="brush-size" min="1" value="5" size="3">
-          
             <input type="color" id="color-picker" value="#000000">
+            <div class="move" id="move" data-tool="move"></div>
+            
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>

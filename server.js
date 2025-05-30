@@ -1,15 +1,19 @@
-const { createCanvas, loadImage } = require("canvas");
+const nbEcran = 3;
+const width = 1024 * nbEcran;
+const height = 768 * nbEcran;
+
+const { createCanvas, Image } = require("canvas");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const fs = require("fs");
 const dayjs = require("dayjs");
-  
-if (!fs.existsSync("images")){
-    fs.mkdirSync("images");
+
+if (!fs.existsSync("images")) {
+  fs.mkdirSync("images");
 }
-if (!fs.existsSync("backup")){
-    fs.mkdirSync("backup");
+if (!fs.existsSync("backup")) {
+  fs.mkdirSync("backup");
 }
 
 const app = express();
@@ -17,16 +21,20 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const image = [];
-const nbEcran = 2;
-const width = 1024 * nbEcran;
-const height = 768 * nbEcran;
 
 const canvas = createCanvas(width, height);
 const context = canvas.getContext("2d");
+try{
+let img2 = new Image();
+img2.src = "images/drawing.png";
+context.drawImage(img2, 0, 0);
+}catch (error) {}
 
-function drawLine(from, to, color, brushSize) {
+function drawLine(from, to, color, brushSize, gco) {
   context.strokeStyle = color;
+  context.globalCompositeOperation = gco;
   context.lineWidth = brushSize;
+  context.lineJoin = "round";
   context.beginPath();
   context.moveTo(from.x, from.y);
   context.lineTo(to.x, to.y);
@@ -67,7 +75,7 @@ setInterval(() => {
 
 setInterval(() => {
   backupImage();
-}, 1000*60*60); // Backup image every hour
+}, 1000 * 60 * 60); // Backup image every hour
 
 //  {
 //   fp: { x: 990, y: 344 },
@@ -88,17 +96,22 @@ async function init() {
     console.log("user connected:", socket.id);
 
     socket.on("drawing-data", async (drawingData) => {
+      console.log("drawing-data", drawingData);
       drawLine(
         { x: drawingData.fp.x, y: drawingData.fp.y },
         { x: drawingData.tp.x, y: drawingData.tp.y },
         drawingData.c,
-        parseInt(drawingData.bs)
+        parseInt(drawingData.bs),
+        drawingData.gco
       );
       socket.broadcast.emit("drawing-data", drawingData);
     });
 
     socket.on("start-drawing", (data) => {
       socket.broadcast.emit("start-drawing", data);
+    });
+    socket.on("log", (data) => {
+      console.log(data);
     });
 
     socket.on("disconnect", () => {

@@ -2,12 +2,19 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+}
+.container {
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
 }
 
 canvas {
   display: block;
   background-color: #ffffff;
   border: 1px solid #000000;
+  mmmtouch-action: none;
 }
 
 #user-id-display {
@@ -22,13 +29,17 @@ canvas {
 
 .toolbar {
   position: fixed;
-  bottom: 10px;
+  top: 10px;
   left: 10px;
   display: flex;
   gap: 5px;
   align-items: center;
+  background-color: #fff;
+  flex-direction: column;
 }
-
+#drawing-board {
+  background: url("images/wall.jpg") repeat center center;
+}
 #thumbnail {
   position: fixed;
   bottom: 0px;
@@ -37,15 +48,31 @@ canvas {
   height: 73px;
   border: 1px solid black;
 }
-#brush-size,#floating-image {
+#brush-size,
+#floating-image {
   display: none;
+}
+#move{
+  width: 44px;
+  height: 44px;
+  background: url(cursors/move.svg) no-repeat center center;
+  background-size:100%;
+}
+.gomme {
+  width: 44px;
+  height: 44px;
+  background: url(cursors/eraser.svg) no-repeat center center;
+  background-size: calc(100% - (100% / (var(--size) + 2)));
+}
+[data-tool].selected {
+  background-color: #ccc !important;
 }
 .brusch {
   --size: 1;
   --factor: 2px;
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
 }
 .brusch:hover {
   background-color: #ddd;

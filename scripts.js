@@ -1,12 +1,42 @@
-const nbEcran = 3;
-const width = 1024 * nbEcran;
-const height = 768 * nbEcran;
+const width = 3000;
+const height = 2000;
+const factor = 18;
+const thumbnailWidth = width / factor;
+const thumbnailHeight = height / factor;
+
+REMOVE_THUMBNAIL_AFTER = 60 * 1000;
+REFRESH_IMAGE_THUMBNAIL = 10 * 1000; // 10 seconds
 
 // TODO placer aleatoirement dans l'ecran
 const move = document.getElementById("move");
 const brushSizeInput = document.getElementById("brush-size");
 const colorPicker = document.getElementById("color-picker");
+const thumbnail = document.getElementById("main-thumbnail");
+const thumbImage = document.getElementById("thumbnail-image");
+
+setInterval(() => {
+  thumbImage.src = "images/drawing.png?" + new Date().getTime();
+}, REFRESH_IMAGE_THUMBNAIL);
+
+console.log(thumbnail);
+thumbnail.style.width = thumbnailWidth + "px";
+thumbnail.style.height = thumbnailHeight + "px";
 let selectedTools = "pencil";
+const video = document.getElementById("video");
+video.controls = true;
+video.style.display = "none";
+video.style.zIndex = "1001";
+
+if (false) {
+  setInterval(() => {
+    video.style.display = "block";
+    video.play();
+    // setTimeout(() => {
+    //   video.style.display = "none";
+    //   video.pause();
+    // }, 3000); // Hide video after 5 seconds
+  }, 6000); // Load animation every 60 seconds
+}
 
 move.addEventListener("click", () => {
   selectedTools = move.dataset.tool;
@@ -77,10 +107,6 @@ function loadAnimation() {
   };
 }
 
-// setInterval(() => {
-//   loadAnimation();
-// }, 10000); // Load animation every 10 seconds
-
 userIdDisplay.textContent = `User${Math.floor(Math.random() * 100) + 1}`;
 
 colorPicker.value = (function getRandomColor() {
@@ -92,6 +118,7 @@ colorPicker.value = (function getRandomColor() {
     ).join("")
   );
 })();
+userColor = colorPicker.value;
 
 let drawing = false;
 
@@ -131,6 +158,19 @@ const startMouvement = (e) => {
   // Emit the 'startDrawing' event
   socket.emit("start-drawing", previousPosition);
 };
+const emitEventScreen = () => {
+  socket.emit("user-enter", createUserData());
+  drawThumnail(
+    "moi",
+    userColor,
+    zoomFactor,
+    window.innerWidth,
+    window.innerHeight,
+    zoomOrigin.x,
+    zoomOrigin.y
+  )
+
+};
 const moveMouvement = (e) => {
   if (!drawing) return;
   let color, size, gco;
@@ -145,9 +185,7 @@ const moveMouvement = (e) => {
     gco = "source-over";
   } else if (selectedTools === "move") {
     const cpage = ecran2canvas({ x: e.pageX, y: e.pageY });
-    console.log(cpage);
-    console.log(previousPosition);
-    console.log(startTranslate);
+    emitEventScreen();
     setZoom(zoomFactor, {
       x: (cpage.x - previousPosition.x) * zoomFactor + startTranslate.x,
       y: (cpage.y - previousPosition.y) * zoomFactor + startTranslate.y,
@@ -205,6 +243,7 @@ const setZoom = (newscale, orig) => {
   console.log("log", t);
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = t;
+  emitEventScreen();
 };
 const zoom = (newscale, center) => {
   const px = center.x;
@@ -244,7 +283,7 @@ const pinchZoom = (e) => {
       makePos(touch2.offsetX, touch2.offsetY)
     );
   }
-  socket.emit("log", "pinchzoom1");
+  emitEventScreen();
 };
 const stagePinch = (p1, p2) => {
   const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -294,10 +333,86 @@ canvas.addEventListener("touchmove", (e) => {
   }
 });
 
+createUserData = () => {
+  return {
+    screenWidth: window.innerWidth,
+    screenHeight: window.innerHeight,
+    canvasX: zoomOrigin.x,
+    canvasY: zoomOrigin.y,
+    zoom: zoomFactor,
+    color: userColor,
+  };
+};
+dropThumnail = (userId) => {
+  let userThumbnail = document.getElementById("thumbnail-" + userId);
+  if (userThumbnail) {
+    userThumbnail.remove();
+  }
+}
+
+drawThumnail = (
+  userId,
+  color,
+  zoom,
+  screenWidth,
+  screenHeight,
+  canvasX,
+  canvasY
+) => {
+  let userThumbnail = document.getElementById("thumbnail-" + userId);
+  if (!userThumbnail) {
+    userThumbnail = document.createElement("div");
+    thumbnail.appendChild(userThumbnail);
+    userThumbnail.id = "thumbnail-" + userId;
+    userThumbnail.className = "thumbnail-user";
+    userThumbnail.style.borderColor = color;
+  }
+  clearTimeout(userThumbnail.timeoutId);
+  userThumbnail.style.width =
+    (screenWidth * thumbnailWidth) / width / zoom + "px";
+  userThumbnail.style.height =
+    (screenHeight * thumbnailHeight) / height / zoom + "px";
+  console.log(screenWidth, screenHeight, thumbnailWidth, thumbnailHeight, zoom);
+  userThumbnail.style.left =
+    ((-canvasX / zoom) * thumbnailWidth) / width + "px";
+  userThumbnail.style.top =
+    ((-canvasY / zoom) * thumbnailHeight) / height + "px";
+  userThumbnail.style.display = "block";
+  userThumbnail.timeoutId = setTimeout(() => {
+    userThumbnail.remove();
+  }, REMOVE_THUMBNAIL_AFTER); // Remove thumbnail after 1m
+};
 const socket = io.connect();
+
+socket.on("user-enter", (data) => {
+  drawThumnail(
+    data.userId,
+    data.color,
+    data.zoom,
+    data.screenWidth,
+    data.screenHeight,
+    data.canvasX,
+    data.canvasY
+  );
+});
+socket.on("user-exit", (data) => {
+  dropThumnail(
+    data.userId,
+  );
+});
+
+emitEventScreen();
 
 socket.on("drawing-data", (data) => {
   drawLine(data.fp, data.tp, data.c, data.bs, data.gco);
+  // drawThumnail(
+  //   data.userId,
+  //   data.zoom,
+  //   data.screenWidth,
+  //   data.screenHeight,
+  //   data.canvasX,
+  //   data.canvasY
+  // );
 });
 
 socket.on("start-drawing", (data) => {

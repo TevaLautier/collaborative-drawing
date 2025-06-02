@@ -24,11 +24,11 @@ const image = [];
 
 const canvas = createCanvas(width, height);
 const context = canvas.getContext("2d");
-try{
-let img2 = new Image();
-img2.src = "images/drawing.png";
-context.drawImage(img2, 0, 0);
-}catch (error) {}
+try {
+  let img2 = new Image();
+  img2.src = "images/drawing.png";
+  context.drawImage(img2, 0, 0);
+} catch (error) {}
 
 function drawLine(from, to, color, brushSize, gco) {
   context.strokeStyle = color;
@@ -104,9 +104,13 @@ async function init() {
         parseInt(drawingData.bs),
         drawingData.gco
       );
+      drawingData.userId = socket.id;
       socket.broadcast.emit("drawing-data", drawingData);
     });
-
+    socket.on("user-enter", (data) => {
+      data.userId = socket.id;
+      socket.broadcast.emit("user-enter", data);
+    });
     socket.on("start-drawing", (data) => {
       socket.broadcast.emit("start-drawing", data);
     });
@@ -116,6 +120,7 @@ async function init() {
 
     socket.on("disconnect", () => {
       console.log("user disconnected:", socket.id);
+      socket.broadcast.emit("user-exit", { userId: socket.id });
     });
   });
 

@@ -22,27 +22,45 @@ console.log(thumbnail);
 thumbnail.style.width = thumbnailWidth + "px";
 thumbnail.style.height = thumbnailHeight + "px";
 let selectedTools = "pencil";
-const video = document.getElementById("video");
-video.controls = true;
-video.style.display = "none";
-video.style.zIndex = "1001";
+const animation = document.getElementById("animation");
+animation.style.zIndex = "1001";
 
-if (false) {
-  setInterval(() => {
-    video.style.display = "block";
-    video.play();
-    // setTimeout(() => {
-    //   video.style.display = "none";
-    //   video.pause();
-    // }, 3000); // Hide video after 5 seconds
-  }, 6000); // Load animation every 60 seconds
-}
+loadAnimation = () => {
+  animation.style.display = "block";
+};
+setInterval(() => {
+  thumbImage.src = "images/drawing.png?" + new Date().getTime();
+}, REFRESH_IMAGE_THUMBNAIL);
 
-move.addEventListener("click", () => {
-  selectedTools = move.dataset.tool;
+selectToolEraser = (size) => {
+  selectedTools = "eraser";
+  clearToolSelection();
+  document
+    .querySelector('[data-tool="eraser"][data-size="' + size + '"]')
+    .classList.add("selected");
+  brushSizeInput.value = size;
+};
+selectToolBrush = (size) => {
+  selectedTools = "pencil";
+  clearToolSelection();
+  document
+    .querySelector('[data-tool="pencil"][data-size="' + size + '"]')
+    .classList.add("selected");
+  brushSizeInput.value = size;
+};
+selectToolMove = () => {
+  selectedTools = "move";
   clearToolSelection();
   move.classList.add("selected");
-});
+};
+initPreviousTool = () => {
+  previousSelectedTool = {
+    selectedTools,
+    zoomFactor,
+    size: brushSizeInput.value,
+  };
+};
+
 const clearToolSelection = () => {
   const brushes = document.querySelectorAll(".brusch");
   brushes.forEach((brush) => {
@@ -54,23 +72,24 @@ const clearToolSelection = () => {
     gommme.classList.remove("selected");
   });
 };
+
+move.addEventListener("click", () => {
+  selectToolMove();
+  initPreviousTool();
+});
 const brushes = document.querySelectorAll(".brusch");
 brushes.forEach((brush) => {
   brush.addEventListener("click", () => {
-    selectedTools = brush.dataset.tool;
-    clearToolSelection();
-    brush.classList.add("selected");
-    brushSizeInput.value = brush.dataset.size;
+    selectToolBrush(brush.dataset.size);
+    initPreviousTool();
   });
 });
 
 const gommes = document.querySelectorAll(".gomme");
 gommes.forEach((gomme) => {
   gomme.addEventListener("click", () => {
-    selectedTools = gomme.dataset.tool;
-    clearToolSelection();
-    gomme.classList.add("selected");
-    brushSizeInput.value = gomme.dataset.size;
+    selectToolEraser(gomme.dataset.size);
+    initPreviousTool();
   });
 });
 
@@ -86,26 +105,10 @@ const userIdDisplay = document.getElementById("user-id-display");
 
 const minZoom = 0.9;
 
-console.log(minZoom);
 canvas.width = width;
 canvas.height = height;
 document.body.style.height = height + "px";
 document.body.style.width = width + "px";
-
-function loadAnimation() {
-  const img = document.getElementById("floating-image");
-  img.src = "animation/1.gif";
-  img.onload = () => {
-    img.style.display = "block";
-    img.style.position = "fixed";
-    img.style.top = Math.random() * (window.innerHeight - img.height) + "px";
-    img.style.left = Math.random() * (window.innerWidth - img.width) + "px";
-    img.style.zIndex = "1000"; // Ensure the image is on top
-    setTimeout(() => {
-      img.style.display = "none";
-    }, 5000); // Hide the image after 5 seconds
-  };
-}
 
 userIdDisplay.textContent = `User${Math.floor(Math.random() * 100) + 1}`;
 
@@ -168,8 +171,7 @@ const emitEventScreen = () => {
     window.innerHeight,
     zoomOrigin.x,
     zoomOrigin.y
-  )
-
+  );
 };
 const moveMouvement = (e) => {
   if (!drawing) return;
@@ -190,6 +192,7 @@ const moveMouvement = (e) => {
       x: (cpage.x - previousPosition.x) * zoomFactor + startTranslate.x,
       y: (cpage.y - previousPosition.y) * zoomFactor + startTranslate.y,
     });
+
     return;
   }
   if (zoomFactor < minZoom) return;
@@ -222,6 +225,27 @@ const stopMouvmeent = (e) => {
   socket.emit("log", { zoomFactor });
 };
 
+checkAnimation = () => {
+  console.log("checkAnimation", minZoom, zoomFactor);
+  if (zoomFactor > minZoom) {
+    animation.style.display = "none";
+  } else {
+    animation.style.display = "block";
+  }
+};
+previousSelectedTool = {};
+checkToolSelection = () => {
+  const tmp = { selectedTools, zoomFactor, size: brushSizeInput.value };
+  if (zoomFactor < minZoom) {
+    selectToolMove();
+  } else {
+    if (previousSelectedTool.selectedTools === "pencil") {
+      selectToolBrush(brushSizeInput.value);
+    } else if (previousSelectedTool.selectedTools === "eraser") {
+      selectToolEraser(brushSizeInput.value);
+    }
+  }
+};
 // setTimeout(() => {
 //   zoom(1.1, makePos(100, 100));
 // }, 2000);
@@ -240,10 +264,11 @@ const setZoom = (newscale, orig) => {
     "px, " +
     zoomOrigin.y / newscale +
     "px)";
-  console.log("log", t);
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = t;
   emitEventScreen();
+  checkAnimation();
+  checkToolSelection();
 };
 const zoom = (newscale, center) => {
   const px = center.x;
@@ -348,7 +373,7 @@ dropThumnail = (userId) => {
   if (userThumbnail) {
     userThumbnail.remove();
   }
-}
+};
 
 drawThumnail = (
   userId,
@@ -396,9 +421,7 @@ socket.on("user-enter", (data) => {
   );
 });
 socket.on("user-exit", (data) => {
-  dropThumnail(
-    data.userId,
-  );
+  dropThumnail(data.userId);
 });
 
 emitEventScreen();

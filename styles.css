@@ -47,15 +47,15 @@ canvas {
   border: 1px solid black;
   background-color: #fff;
 }
-#main-thumbnail  img{
+#main-thumbnail img {
   width: 100%;
   height: 100%;
 }
 .thumbnail-user {
   border: 1px solid red;
   position: absolute;
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
 }
 #brush-size,
 #floating-image {
@@ -98,10 +98,34 @@ canvas {
   border-radius: 100%;
 }
 
-#video {
+#animation {
   position: fixed;
   bottom: 0;
   right: 0;
-  width: 100%;
-  height: 100%;
+  height: 30vh;
+  animation: linear infinite;
+  animation-name: run;
+  animation-duration: 30s;
+}
+@keyframes run {
+  0% {
+    transform: scaleX(1);
+    right: -20vh;
+  }
+  50% {
+    right: 120vw;
+    transform: scaleX(1);
+  }
+  51% {
+   right: 120vw;
+    transform: scaleX(-1);
+  }
+  99% {
+    right: -20vw;
+    transform: scaleX(-1);
+  }
+  100% {
+    right: -20vw;
+    transform: scaleX(1);
+  }
 }
